@@ -13,7 +13,7 @@ composer require coppolafab/php-url-signer
 use coppolafab\UrlSigner\HashHmacUrlSigner;
 use DateTimeImmutable;
 
-$urlSigner = new HashHmacUrlSigner('signature_key');
+$urlSigner = new HashHmacUrlSigner('valid'  /** signature key */);
 
 // valid until 2020-09-13T12:26:40+00:00
 $expirationDate = (new DateTimeImmutable())->setTimestamp(1600000000);
