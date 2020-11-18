@@ -6,7 +6,13 @@
         beStrictAboutResourceUsageDuringSmallTests="true"
         beStrictAboutOutputDuringTests="true"
         colors="true"
-        bootstrap="vendor/autoload.php">
+        bootstrap="tests/bootstrap.php">
+
+    <php>
+        <ini name="display_errors" value="1" />
+        <ini name="error_log" value="/proc/self/fd/2" />
+    </php>
+
     <testsuites>
         <testsuite name="coppolafab Test Suite">
             <directory>tests</directory>

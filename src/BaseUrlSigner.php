@@ -148,10 +148,10 @@ abstract class BaseUrlSigner implements UrlSigner
         return vsprintf('%s://%s%s%s?%s%s', [
             $parsedUrl['scheme'],
             $parsedUrl['host'],
-            $parsedUrl['port'] ? ':' . $parsedUrl['port'] : '',
-            $parsedUrl['path'] ,
+            isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : '',
+            $parsedUrl['path'] ?? '',
             http_build_query($parsedQuery),
-            $parsedUrl['fragment'] ? '#' . $parsedUrl['fragment'] : ''
+            isset($parsedUrl['fragment']) ? '#' . $parsedUrl['fragment'] : ''
         ]);
     }
 
