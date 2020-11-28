@@ -25,7 +25,7 @@ final class HashHmacUrlSignerTest extends TestCase
     {
         $this->expectException(InvalidUrlParameter::class);
 
-        new HashHmacUrlSigner('valid', '', 'url_expire_at');
+        new HashHmacUrlSigner('valid', '', 'url_expires_at');
     }
 
     public function testInvalidExpireParameter(): void
@@ -96,7 +96,7 @@ final class HashHmacUrlSignerTest extends TestCase
         $signer = new HashHmacUrlSigner(
             'valid',
             'signature',
-            'url_expire_at',
+            'url_expires_at',
             $pastClock
         );
 
@@ -118,7 +118,7 @@ final class HashHmacUrlSignerTest extends TestCase
         $signer = new HashHmacUrlSigner(
             'valid',
             'signature',
-            'url_expire_at',
+            'url_expires_at',
             $futureClock
         );
 
@@ -142,42 +142,47 @@ final class HashHmacUrlSignerTest extends TestCase
             'http_basic' => [
                 'http://example.com',
                 $fixedExpirationDate,
-                'http://example.com?url_expire_at=1600000000&signature=7b33cadeddce2f68063b02df33a8b462352aebcb0d9262da7bba6a25f45036d4',
+                'http://example.com?url_expires_at=1600000000&signature=46a550e6b0c672781b3553fa98cf68b36f408fe32182b61ddd84f137e5c41d89',
             ],
             'https_with_port' => [
                 'https://example.com:8080',
                 $fixedExpirationDate,
-                'https://example.com:8080?url_expire_at=1600000000&signature=eba74d37a150cb9f201db9934d85977f11f73ed754f212a7c4514b5d6a7543b2',
+                'https://example.com:8080?url_expires_at=1600000000&signature=6ab9dee3ea9a7dc70308c3f9c83dbea560277be9668dbe38f35264acaebdac02',
             ],
             'https_with_rootpath' => [
                 'https://example.com/',
                 $fixedExpirationDate,
-                'https://example.com/?url_expire_at=1600000000&signature=70d95e8eb1d4184199bf5cf2b64c630856016d5f52f412fd39a2b8e84e38ab72',
+                'https://example.com/?url_expires_at=1600000000&signature=d6ebe19e590813d94d1b58fe9f9e204a3c5f074ac791dbf0fc2bc3631091f2f1',
             ],
             'https_with_path' => [
                 'https://example.com/path',
                 $fixedExpirationDate,
-                'https://example.com/path?url_expire_at=1600000000&signature=0bfc67659857a3c4fa3facbf7cac340a5977f0b19294c296f8bf9f282f4e1c5e',
+                'https://example.com/path?url_expires_at=1600000000&signature=78681bab4602edf8de1972c417a82445a7063291bd83fbe4cdf0aba9e764987c',
             ],
             'https_with_query' => [
                 'https://example.com/path?a',
                 $fixedExpirationDate,
-                'https://example.com/path?a=&url_expire_at=1600000000&signature=51fe806d1d0496bdec4d1b0e52d3c71da64aee6673b10a46eeaa83f2dfab45f2',
+                'https://example.com/path?a=&url_expires_at=1600000000&signature=09a18f68f0f2db118c99009f99e015e4c2a6fe769414e065506311c5363131d4',
             ],
             'https_with_query2' => [
                 'https://example.com/path?a=',
                 $fixedExpirationDate,
-                'https://example.com/path?a=&url_expire_at=1600000000&signature=51fe806d1d0496bdec4d1b0e52d3c71da64aee6673b10a46eeaa83f2dfab45f2',
+                'https://example.com/path?a=&url_expires_at=1600000000&signature=09a18f68f0f2db118c99009f99e015e4c2a6fe769414e065506311c5363131d4',
+            ],
+            'https_with_empty_fragment' => [
+                'https://example.com/path#',
+                $fixedExpirationDate,
+                'https://example.com/path?url_expires_at=1600000000&signature=198ce1619abfc3fa7cbce03508d2a604e4c4ee479cae42b7b8792811d131b06e#',
             ],
             'https_with_fragment' => [
                 'https://example.com/path#a',
                 $fixedExpirationDate,
-                'https://example.com/path?url_expire_at=1600000000&signature=6493498c459583a24afd04f1434f31b95b88f076b921d7b5af4a560e45e120ff#a',
+                'https://example.com/path?url_expires_at=1600000000&signature=55c26ffa48854b398df58a0f3720b53bbe5a986d0ad3dac11e4245a4cf898802#a',
             ],
             'full' => [
                 'https://example.com/path?q=1#a',
                 $fixedExpirationDate,
-                'https://example.com/path?q=1&url_expire_at=1600000000&signature=daa2aa09642b92569faed19c1dfcaeb438ee5b018e5c58adf1328fed560f039c#a',
+                'https://example.com/path?q=1&url_expires_at=1600000000&signature=a30466c46cc265a4ce9244d2e55a70aa77a955315fe5c9b971705e609553abb0#a',
             ],
         ];
     }
@@ -197,7 +202,7 @@ final class HashHmacUrlSignerTest extends TestCase
 
         return [
             [
-                'http://example.com?url_expire_at=1',
+                'http://example.com?url_expires_at=1',
                 $fixedExpirationDate,
             ],
             [
@@ -209,6 +214,6 @@ final class HashHmacUrlSignerTest extends TestCase
 
     private function createDefaultSigner(): HashHmacUrlSigner
     {
-        return new HashHmacUrlSigner('valid', 'signature', 'url_expire_at');
+        return new HashHmacUrlSigner('valid', 'signature', 'url_expires_at');
     }
 }

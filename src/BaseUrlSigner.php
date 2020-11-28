@@ -15,6 +15,8 @@ use function http_build_query;
 use function ksort;
 use function parse_url;
 use function parse_str;
+use function strpos;
+use function version_compare;
 use function vsprintf;
 
 abstract class BaseUrlSigner implements UrlSigner
@@ -45,6 +47,7 @@ abstract class BaseUrlSigner implements UrlSigner
         $this->signerKey = $signerKey;
         $this->urlSignatureParam = $urlSignatureParam;
         $this->urlExpireParam = $urlExpireParam;
+        $this->onPHP7 = version_compare(PHP_VERSION, '8', '<');
     }
 
     /**
@@ -52,16 +55,11 @@ abstract class BaseUrlSigner implements UrlSigner
      */
     public function sign(string $url, DateTimeImmutable $expirationDate): string
     {
-        /** @var array<string,string>|false $parsedUrl */
-        $parsedUrl = parse_url($url);
-
-        if ($parsedUrl === false) {
-            throw new InvalidArgumentException('invalid url ' . $url);
-        }
+        $parsedUrl = $this->doParseUrl($url);
 
         if (array_key_exists('query', $parsedUrl)) {
             parse_str($parsedUrl['query'], $parsedQuery);
-            $this->ensureUrlSignerParametersDoesNotExist($parsedQuery);
+            $this->ensureUrlSignerParametersDoNotExist($parsedQuery);
         } else {
             $parsedQuery = [];
         }
@@ -77,12 +75,7 @@ abstract class BaseUrlSigner implements UrlSigner
 
     public function verify(string $url): bool
     {
-        /** @var array<string,string>|false $parsedUrl */
-        $parsedUrl = parse_url($url);
-
-        if ($parsedUrl === false) {
-            throw new InvalidArgumentException('invalid url ' . $url);
-        }
+        $parsedUrl = $this->doParseUrl($url);
 
         if (array_key_exists('query', $parsedUrl)) {
             parse_str($parsedUrl['query'], $parsedQuery);
@@ -115,7 +108,7 @@ abstract class BaseUrlSigner implements UrlSigner
     /**
      * @param array<string,string> $parsedQuery
      */
-    private function ensureUrlSignerParametersDoesNotExist(array $parsedQuery): void
+    private function ensureUrlSignerParametersDoNotExist(array $parsedQuery): void
     {
         if (
             array_key_exists($this->urlSignatureParam, $parsedQuery)
@@ -155,8 +148,29 @@ abstract class BaseUrlSigner implements UrlSigner
         ]);
     }
 
+    /**
+     * @return array<string,string>
+     */
+    private function doParseUrl(string $url): array
+    {
+        /** @var array<string,string>|false $parsedUrl */
+        $parsedUrl = parse_url($url);
+
+        if ($parsedUrl === false) {
+            throw new InvalidArgumentException('invalid url ' . $url);
+        }
+
+        // preserve PHP 8 behaviour
+        if (!isset($parsedUrl['fragment']) && $this->onPHP7 && strpos($url, '#') !== false) {
+            $parsedUrl['fragment'] = '';
+        }
+
+        return $parsedUrl;
+    }
+
     private Clock $clock;
     private string $signerKey;
     private string $urlSignatureParam;
     private string $urlExpireParam;
+    private bool $onPHP7;
 }
