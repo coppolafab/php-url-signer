@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+    php-url-signer:
+      build:
+        context: .
+      image: php-url-signer
+      volumes:
+        - ./:/app
+      working_dir: /app

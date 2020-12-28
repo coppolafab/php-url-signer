@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="VIPR" xsi:noNamespaceSchemaLocation="phpcs.xsd">
+<ruleset>
 
     <file>src</file>
     <file>tests</file>
@@ -11,9 +11,7 @@
     <arg name="ignore-annotations" />
     <arg name="parallel" value="8" />
     <arg name="warning-severity" value="0" />
-    <arg value="q" />
-
-    <ini name="memory_limit" value="16M" />
+    <arg value="p" />
 
     <rule ref="PSR12" />
 

@@ -12,6 +12,10 @@ use DateTimeImmutable;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
+use function version_compare;
+
+use const PHP_VERSION;
+
 final class HashHmacUrlSignerTest extends TestCase
 {
     public function testInvalidSignerKey(): void
@@ -65,7 +69,7 @@ final class HashHmacUrlSignerTest extends TestCase
     /**
      * @dataProvider invalidUrlProvider
      */
-    public function testVerifyInvalidUrl(string $url, DateTimeImmutable $expirationDate): void
+    public function testVerifyInvalidUrl(string $url): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -103,15 +107,12 @@ final class HashHmacUrlSignerTest extends TestCase
         $this->assertTrue($signer->verify($expectedUrl));
     }
 
-    /**
-     * @dataProvider expiredUrlProvider
-     */
-    public function testExpiredUrl(string $signedUrl): void
+    public function testExpiredUrl(): void
     {
         $futureClock = new class implements Clock {
             public function currentTime(): DateTimeImmutable
             {
-                return (new DateTimeImmutable())->setTimestamp(1700000000);
+                return (new DateTimeImmutable())->setTimestamp(1600000001);
             }
         };
 
@@ -122,7 +123,38 @@ final class HashHmacUrlSignerTest extends TestCase
             $futureClock
         );
 
+        $signedUrl = $signer->sign('https://example.com/path?q=1', (new DateTimeImmutable())->setTimestamp(1600000000));
+
         $this->assertFalse($signer->verify($signedUrl));
+    }
+
+    public function testNotExpiredUrl(): void
+    {
+        $sameClock = new class implements Clock {
+            public function currentTime(): DateTimeImmutable
+            {
+                return (new DateTimeImmutable())->setTimestamp(1600000000);
+            }
+        };
+
+        $signer = new HashHmacUrlSigner(
+            'valid',
+            'signature',
+            'url_expires_at',
+            $sameClock
+        );
+
+        $signedUrl = $signer->sign('https://example.com/path?q=1', (new DateTimeImmutable())->setTimestamp(1600000000));
+
+        $this->assertTrue($signer->verify($signedUrl));
+    }
+
+    /**
+     * @dataProvider missingSignerParameterProvider
+     */
+    public function testMissingSignerParameter(string $signedUrl): void
+    {
+        $this->assertFalse(($this->createDefaultSigner())->verify($signedUrl));
     }
 
     public function invalidUrlProvider(): array
@@ -137,6 +169,7 @@ final class HashHmacUrlSignerTest extends TestCase
     public function signProvider(): array
     {
         $fixedExpirationDate = (new DateTimeImmutable())->setTimestamp(1600000000);
+        $onPHP7 = version_compare(PHP_VERSION, '8', '<');
 
         return [
             'http_basic' => [
@@ -172,7 +205,9 @@ final class HashHmacUrlSignerTest extends TestCase
             'https_with_empty_fragment' => [
                 'https://example.com/path#',
                 $fixedExpirationDate,
-                'https://example.com/path?url_expires_at=1600000000&signature=198ce1619abfc3fa7cbce03508d2a604e4c4ee479cae42b7b8792811d131b06e#',
+                $onPHP7
+                    ? 'https://example.com/path?url_expires_at=1600000000&signature=78681bab4602edf8de1972c417a82445a7063291bd83fbe4cdf0aba9e764987c'
+                    : 'https://example.com/path?url_expires_at=1600000000&signature=198ce1619abfc3fa7cbce03508d2a604e4c4ee479cae42b7b8792811d131b06e#',
             ],
             'https_with_fragment' => [
                 'https://example.com/path#a',
@@ -183,15 +218,6 @@ final class HashHmacUrlSignerTest extends TestCase
                 'https://example.com/path?q=1#a',
                 $fixedExpirationDate,
                 'https://example.com/path?q=1&url_expires_at=1600000000&signature=a30466c46cc265a4ce9244d2e55a70aa77a955315fe5c9b971705e609553abb0#a',
-            ],
-        ];
-    }
-
-    public function expiredUrlProvider(): array
-    {
-        return [
-            [
-                'https://example.com/path?q=1&url_expire_at=1600000000&signature=daa2aa09642b92569faed19c1dfcaeb438ee5b018e5c58adf1328fed560f039c#a',
             ],
         ];
     }
@@ -208,6 +234,15 @@ final class HashHmacUrlSignerTest extends TestCase
             [
                 'http://example.com?signature=1',
                 $fixedExpirationDate,
+            ],
+        ];
+    }
+
+    public function missingSignerParameterProvider(): array
+    {
+        return [
+            [
+                'http://example.com?signature=46a550e6b0c672781b3553fa98cf68b36f408fe32182b61ddd84f137e5c41d89',
             ],
         ];
     }

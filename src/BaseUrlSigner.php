@@ -12,11 +12,9 @@ use InvalidArgumentException;
 use function array_key_exists;
 use function hash_equals;
 use function http_build_query;
-use function ksort;
 use function parse_url;
 use function parse_str;
-use function strpos;
-use function version_compare;
+use function strval;
 use function vsprintf;
 
 abstract class BaseUrlSigner implements UrlSigner
@@ -47,7 +45,6 @@ abstract class BaseUrlSigner implements UrlSigner
         $this->signerKey = $signerKey;
         $this->urlSignatureParam = $urlSignatureParam;
         $this->urlExpireParam = $urlExpireParam;
-        $this->onPHP7 = version_compare(PHP_VERSION, '8', '<');
     }
 
     /**
@@ -58,19 +55,30 @@ abstract class BaseUrlSigner implements UrlSigner
         $parsedUrl = $this->doParseUrl($url);
 
         if (array_key_exists('query', $parsedUrl)) {
-            parse_str($parsedUrl['query'], $parsedQuery);
+            /** @var string */
+            $query = $parsedUrl['query'];
+
+            $parsedQuery = $this->parsedQueryArray($query);
             $this->ensureUrlSignerParametersDoNotExist($parsedQuery);
         } else {
             $parsedQuery = [];
         }
 
-        $parsedQuery[$this->urlExpireParam] = $expirationDate->getTimestamp();
-
-        ksort($parsedQuery);
+        $parsedQuery[$this->urlExpireParam] = strval($expirationDate->getTimestamp());
 
         return $this->parsedToString($parsedUrl, $parsedQuery + [
             $this->urlSignatureParam => $this->computeSignature($this->parsedToString($parsedUrl, $parsedQuery))
         ]);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function parsedQueryArray(string $parsedQuery): array
+    {
+        parse_str($parsedQuery, $parsedQueryArray);
+        /** @var array<string, string> */
+        return $parsedQueryArray;
     }
 
     public function verify(string $url): bool
@@ -78,7 +86,9 @@ abstract class BaseUrlSigner implements UrlSigner
         $parsedUrl = $this->doParseUrl($url);
 
         if (array_key_exists('query', $parsedUrl)) {
-            parse_str($parsedUrl['query'], $parsedQuery);
+            /** @var string */
+            $query = $parsedUrl['query'];
+            $parsedQuery = $this->parsedQueryArray($query);
         } else {
             $parsedQuery = [];
         }
@@ -91,6 +101,7 @@ abstract class BaseUrlSigner implements UrlSigner
         }
 
         $urlSignature = $parsedQuery[$this->urlSignatureParam];
+
         unset($parsedQuery[$this->urlSignatureParam]);
         $originalUrl = $this->parsedToString($parsedUrl, $parsedQuery);
         $signature = $this->computeSignature($originalUrl);
@@ -106,7 +117,7 @@ abstract class BaseUrlSigner implements UrlSigner
     }
 
     /**
-     * @param array<string,string> $parsedQuery
+     * @param array<string, string> $parsedQuery
      */
     private function ensureUrlSignerParametersDoNotExist(array $parsedQuery): void
     {
@@ -119,7 +130,7 @@ abstract class BaseUrlSigner implements UrlSigner
     }
 
     /**
-     * @param array<string,string> $parsedQuery
+     * @param array<array-key, string> $parsedQuery
      */
     private function containsSignerParameters(array $parsedQuery): bool
     {
@@ -133,36 +144,37 @@ abstract class BaseUrlSigner implements UrlSigner
     }
 
     /**
-     * @param array<string,string> $parsedUrl
-     * @param array<string,string> $parsedQuery
+     * @param array<array-key, mixed> $parsedUrl
+     * @param array<array-key, string> $parsedQuery
      */
     private function parsedToString(array $parsedUrl, array $parsedQuery): string
     {
+        /** @var ?int */
+        $parsedPort = !isset($parsedUrl['port']) ? null : $parsedUrl['port'];
+
+        /** @var string */
+        $parsedFragment = !isset($parsedUrl['fragment']) ? '' : $parsedUrl['fragment'];
+
         return vsprintf('%s://%s%s%s?%s%s', [
             $parsedUrl['scheme'],
             $parsedUrl['host'],
-            isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : '',
+            isset($parsedUrl['port']) ? ':' . strval($parsedPort) : '',
             $parsedUrl['path'] ?? '',
             http_build_query($parsedQuery),
-            isset($parsedUrl['fragment']) ? '#' . $parsedUrl['fragment'] : ''
+            isset($parsedUrl['fragment']) ? '#' . $parsedFragment : ''
         ]);
     }
 
     /**
-     * @return array<string,string>
+     * @return array<array-key, mixed>
      */
     private function doParseUrl(string $url): array
     {
-        /** @var array<string,string>|false $parsedUrl */
+        /** @var array<array-key, mixed>|false */
         $parsedUrl = parse_url($url);
 
         if ($parsedUrl === false) {
             throw new InvalidArgumentException('invalid url ' . $url);
-        }
-
-        // preserve PHP 8 behaviour
-        if (!isset($parsedUrl['fragment']) && $this->onPHP7 && strpos($url, '#') !== false) {
-            $parsedUrl['fragment'] = '';
         }
 
         return $parsedUrl;
@@ -172,5 +184,4 @@ abstract class BaseUrlSigner implements UrlSigner
     private string $signerKey;
     private string $urlSignatureParam;
     private string $urlExpireParam;
-    private bool $onPHP7;
 }

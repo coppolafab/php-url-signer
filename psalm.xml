@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<psalm
+    errorLevel="1"
+    resolveFromConfigFile="true"
+    strictBinaryOperands="true"
+    findUnusedPsalmSuppress="true"
+    findUnusedVariablesAndParams="true"
+    rememberPropertyAssignmentsAfterCall="true"
+>
+    <projectFiles>
+        <directory name="src" />
+    </projectFiles>
+</psalm>
