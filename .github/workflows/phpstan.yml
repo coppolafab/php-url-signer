@@ -50,7 +50,7 @@ jobs:
         run: "composer update --no-ansi --no-interaction --no-plugins --no-progress --no-scripts --prefer-dist"
 
       - name: "Install locked dependencies"
-        if: ${{ matrix.dependencies == 'locked' }}
+        if: ${{ matrix.dependencies == 'locked' && matrix.php-version == '8.0' }}
         run: "composer install --no-ansi --no-interaction --no-plugins --no-progress --no-scripts --prefer-dist"
 
       - name: "phpstan"
