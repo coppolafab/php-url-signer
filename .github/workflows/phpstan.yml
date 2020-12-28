@@ -7,6 +7,7 @@ on:
 jobs:
   static-analysis-phpstan:
     name: "Static Analysis by PHPStan"
+    if: ${{ matrix.dependencies != 'locked' || matrix.php-version == '8.0' }}
 
     runs-on: ${{ matrix.operating-system }}
 
@@ -50,7 +51,7 @@ jobs:
         run: "composer update --no-ansi --no-interaction --no-plugins --no-progress --no-scripts --prefer-dist"
 
       - name: "Install locked dependencies"
-        if: ${{ matrix.dependencies == 'locked' && matrix.php-version == '8.0' }}
+        if: ${{ matrix.dependencies == 'locked' }}
         run: "composer install --no-ansi --no-interaction --no-plugins --no-progress --no-scripts --prefer-dist"
 
       - name: "phpstan"

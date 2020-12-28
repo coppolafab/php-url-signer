@@ -7,6 +7,7 @@ on:
 jobs:
   mutation-tests:
     name: "Mutation tests"
+    if: ${{ matrix.dependencies != 'locked' || matrix.php-version == '8.0' }}
 
     runs-on: ${{ matrix.operating-system }}
 
@@ -51,11 +52,11 @@ jobs:
         run: "composer update --no-ansi --no-interaction --no-plugins --no-progress --no-scripts --prefer-dist"
 
       - name: "Install locked dependencies"
-        if: ${{ matrix.dependencies == 'locked' && matrix.php-version == '8.0' }}
+        if: ${{ matrix.dependencies == 'locked' }}
         run: "composer install --no-ansi --no-interaction --no-plugins --no-progress --no-scripts --prefer-dist"
 
       - name: "Infection"
-        run: "./vendor/bin/infection"
+        run: "vendor/bin/infection"
         env:
           INFECTION_BADGE_API_KEY: ${{ secrets.INFECTION_BADGE_API_KEY }}
           STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
