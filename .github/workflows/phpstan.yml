@@ -7,7 +7,6 @@ on:
 jobs:
   static-analysis-phpstan:
     name: "Static Analysis by PHPStan"
-    if: ${{ matrix.dependencies != 'locked' || matrix.php-version == '8.0' }}
 
     runs-on: ${{ matrix.operating-system }}
 
@@ -22,6 +21,9 @@ jobs:
           - "8.0"
         operating-system:
           - "ubuntu-latest"
+        exclude:
+          - dependencies: "locked"
+            php-version: "7.4"
 
     steps:
       - name: "Checkout"
