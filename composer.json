@@ -2,6 +2,12 @@
     "name": "coppolafab/php-url-signer",
     "description": "Create signed URLs with an expiring date",
     "license": "ISC",
+    "keywords": [
+        "signed",
+        "url",
+        "link",
+        "expire"
+    ],
     "authors": [
         {
             "name": "Fabio Coppola",
@@ -9,6 +15,7 @@
             "role": "Developer"
         }
     ],
+    "prefer-stable": true,
     "require": {
         "php": "~7.4 || ~8.0.0"
     },
@@ -29,5 +36,8 @@
         "phpstan/phpstan": "^0.12.64",
         "vimeo/psalm": "^4.3",
         "infection/infection": "^0.20.2"
+    },
+    "conflict": {
+        "thecodingmachine/safe": "<1.1.3"
     }
 }

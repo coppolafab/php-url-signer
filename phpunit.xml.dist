@@ -10,6 +10,8 @@
     bootstrap="tests/bootstrap.php"
     colors="true"
     columns="max"
+    executionOrder="random"
+    resolveDependencies="true"
     verbose="true"
 >
 
